@@ -1,20 +1,21 @@
 package main.Controllers;
 
-import main.Notes;
-
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
 
-public class ControllerSound {
-    public static int getCode(String name) {
-        return Notes.valueOf(name).code;
+public final class ControllerSound {
+    private final int maxTimePlaying = 50000;
+    private final int deltaTime = 50;
+
+    private MidiChannel channel;
+
+    ControllerSound() {
+        loadChannel();
     }
 
-    private static MidiChannel channel;
-
-    private static void loadChannel() {
+    private void loadChannel() {
         try {
             Synthesizer synth = MidiSystem.getSynthesizer();
             synth.open();
@@ -28,9 +29,38 @@ public class ControllerSound {
         }
     }
 
-    public static void playSound(int number) {
-        loadChannel();
-        channel.noteOn(number, 90);
-        channel.noteOff(number);
+    PlayNote playNote(int numOfNote) {
+        PlayNote play = new PlayNote();
+        play.setNote(numOfNote);
+        play.start();
+        return play;
+    }
+
+    class PlayNote extends Thread {
+        private volatile boolean stop = false;
+        private int numOfNote;
+
+        private void setNote(int num) {
+            numOfNote = num;
+        }
+
+        void setStop() {
+            stop = true;
+        }
+
+        @Override
+        public void run() {
+            channel.noteOn(numOfNote, 90);
+            int count = 0;
+            while (!stop && count < (maxTimePlaying / deltaTime)) {
+                count++;
+                try {
+                    this.sleep(deltaTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            channel.noteOff(numOfNote);
+        }
     }
 }

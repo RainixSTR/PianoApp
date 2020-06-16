@@ -4,11 +4,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import main.Note;
 
 import java.util.*;
 
 public class ControllerTap {
     Map<String, Boolean> buttonPressed = new HashMap<>();
+    Map<String, ControllerSound.PlayNote> buttonThread = new HashMap<>();
 
     @FXML
     private Button A;
@@ -46,58 +48,76 @@ public class ControllerTap {
     @FXML
     private Button U;
 
+    private Button getButtonByName(String name) {
+        switch (name) {
+            case "A":
+                return A;
+            case "S":
+                return S;
+            case "D":
+                return D;
+            case "F":
+                return F;
+            case "G":
+                return G;
+            case "H":
+                return H;
+            case "J":
+                return J;
+            case "W":
+                return W;
+            case "E":
+                return E;
+            case "T":
+                return T;
+            case "Y":
+                return Y;
+            case "U":
+                return U;
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    private ControllerSound controllerSound = new ControllerSound();
+
+    private void onTap(Button button, String nameButton) {
+        int noteCode = Note.getNoteByKey(nameButton).code;
+        if (!buttonPressed.getOrDefault(nameButton, false)) {
+            button.setStyle("-fx-border-color: black; -fx-background-color: orange");
+            ControllerSound.PlayNote noteThread = controllerSound.playNote(noteCode);
+            buttonThread.put(nameButton, noteThread);
+            if (!buttonPressed.keySet().contains(nameButton))
+                buttonPressed.put(nameButton, true);
+            else
+                buttonPressed.replace(nameButton, true);
+        }
+    }
+
+    private void onRelease(Button button, String nameButton) {
+        List<String> blackButton = Arrays.asList("W", "E", "T", "Y", "U");
+        try {
+            buttonThread.get(nameButton).setStop();
+        } catch (NullPointerException e) {}
+        if (blackButton.contains(nameButton))
+            button.setStyle("-fx-border-color: black; -fx-background-color: black");
+        else
+            button.setStyle("-fx-border-color: black; -fx-background-color: white");
+        if (!buttonPressed.keySet().contains(nameButton))
+            buttonPressed.put(nameButton, false);
+        else
+            buttonPressed.replace(nameButton, false);
+    }
+
     @FXML
     void keyTap(KeyEvent keyEvent) {
         if (keyEvent.getEventType() == KeyEvent.KEY_PRESSED) {
-            boolean isOk = true;
-            Button button = (Button) keyEvent.getSource();
-            String nameButton = keyEvent.getCode().getChar();
-            switch (nameButton) {
-                case "A":
-                    button = A;
-                    break;
-                case "S":
-                    button = S;
-                    break;
-                case "D":
-                    button = D;
-                    break;
-                case "F":
-                    button = F;
-                    break;
-                case "G":
-                    button = G;
-                    break;
-                case "H":
-                    button = H;
-                    break;
-                case "J":
-                    button = J;
-                    break;
-                case "W":
-                    button = W;
-                    break;
-                case "E":
-                    button = E;
-                    break;
-                case "T":
-                    button = T;
-                    break;
-                case "Y":
-                    button = Y;
-                    break;
-                case "U":
-                    button = U;
-                    break;
-                default:
-                    isOk = false;
-                    break;
-            }
-            if (isOk && !buttonPressed.getOrDefault(nameButton, false)) {
-                button.setStyle("-fx-border-color: black; -fx-background-color: grey");
-                ControllerSound.playSound(ControllerSound.getCode(keyEvent.getCode().toString()));
-                if (!buttonPressed.keySet().contains(nameButton)) buttonPressed.put(nameButton, true);
-                else buttonPressed.replace(nameButton, true);
+            try {
+                String nameButton = keyEvent.getCode().getChar();
+                Button button = getButtonByName(nameButton);
+                onTap(button, nameButton);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Not correct button: " + e.toString());
             }
         }
     }
@@ -105,58 +125,12 @@ public class ControllerTap {
     @FXML
     void keyReleased(KeyEvent keyEvent) {
         if (keyEvent.getEventType() == KeyEvent.KEY_RELEASED) {
-            Button button = (Button )keyEvent.getSource();
-            String nameButton = keyEvent.getCode().getChar();
-            boolean isOk = true;
-            switch (nameButton) {
-                case "A":
-                    button = A;
-                    break;
-                case "S":
-                    button = S;
-                    break;
-                case "D":
-                    button = D;
-                    break;
-                case "F":
-                    button = F;
-                    break;
-                case "G":
-                    button = G;
-                    break;
-                case "H":
-                    button = H;
-                    break;
-                case "J":
-                    button = J;
-                    break;
-                case "W":
-                    button = W;
-                    break;
-                case "E":
-                    button = E;
-                    break;
-                case "T":
-                    button = T;
-                    break;
-                case "Y":
-                    button = Y;
-                    break;
-                case "U":
-                    button = U;
-                    break;
-                default:
-                    isOk = false;
-                    break;
-            }
-            if (isOk && buttonPressed.getOrDefault(nameButton, true)) {
-                List<String> blackButton = Arrays.asList("W", "E", "T", "Y", "U");
-                if (blackButton.contains(nameButton))
-                    button.setStyle("-fx-border-color: black; -fx-background-color: black");
-                else
-                    button.setStyle("-fx-border-color: black; -fx-background-color: white");
-                if (!buttonPressed.keySet().contains(nameButton)) buttonPressed.put(nameButton, false);
-                else buttonPressed.replace(nameButton, false);
+            try {
+                String nameButton = keyEvent.getCode().getChar();
+                Button button = getButtonByName(nameButton);
+                onRelease(button, nameButton);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Not correct button: " + e.toString());
             }
         }
     }
@@ -165,8 +139,7 @@ public class ControllerTap {
     void mouseTap(MouseEvent mouseEvent) {
         if (mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED) {
             Button button = (Button) mouseEvent.getSource();
-            button.setStyle("-fx-border-color: black; -fx-background-color: grey");
-            ControllerSound.playSound(ControllerSound.getCode(button.getId()));
+            onTap(button, button.getId());
         }
     }
 
@@ -174,15 +147,8 @@ public class ControllerTap {
     void mouseReleased(MouseEvent mouseEvent) {
         if (mouseEvent.getEventType() == MouseEvent.MOUSE_RELEASED) {
             Button button = (Button) mouseEvent.getSource();
-            button.setStyle("-fx-border-color: black; -fx-background-color: white");
-        }
-    }
-
-    @FXML
-    void mouseReleasedBlack(MouseEvent mouseEvent) {
-        if (mouseEvent.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            Button button = (Button) mouseEvent.getSource();
-            button.setStyle("-fx-border-color: black; -fx-background-color: black");
+            String nameButton = button.getId();
+            onRelease(button, nameButton);
         }
     }
 }
