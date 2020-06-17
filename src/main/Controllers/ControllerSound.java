@@ -1,13 +1,18 @@
 package main.Controllers;
 
+import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
+
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
 
-public final class ControllerSound {
+import static main.Controllers.ControllerTap.deltaTime;
+
+public class ControllerSound {
+
     private final int maxTimePlaying = 50000;
-    private final int deltaTime = 50;
 
     private MidiChannel channel;
 
@@ -30,6 +35,7 @@ public final class ControllerSound {
     }
 
     PlayNote playNote(int numOfNote) {
+
         PlayNote play = new PlayNote();
         play.setNote(numOfNote);
         play.start();

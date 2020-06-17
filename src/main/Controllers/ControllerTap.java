@@ -1,7 +1,12 @@
 package main.Controllers;
 
+import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import main.Note;
@@ -48,6 +53,29 @@ public class ControllerTap {
     @FXML
     private Button U;
 
+    @FXML
+    private ChoiceBox octave;
+
+    @FXML
+    private CheckBox delayButton;
+    
+    ObservableList<String> octaveList = FXCollections.observableArrayList
+            ("Small octave", "First octave", "Second octave");
+
+    @FXML
+    void initialize() {
+        octave.setItems(octaveList);
+        octave.setValue("First octave");
+    }
+
+    static volatile int deltaTime = 50;
+
+    @FXML
+    void useDelay() {
+        if (delayButton.isSelected()) deltaTime = 5000;
+        else deltaTime = 50;
+    }
+
     private Button getButtonByName(String name) {
         switch (name) {
             case "A":
@@ -82,10 +110,23 @@ public class ControllerTap {
     private ControllerSound controllerSound = new ControllerSound();
 
     private void onTap(Button button, String nameButton) {
+        int octaveNumber;
+        switch (octave.getValue().toString()) {
+            case "Second octave":
+                octaveNumber = 12;
+                break;
+            case "Small octave":
+                octaveNumber = -12;
+                break;
+            default:
+                octaveNumber = 0;
+                break;
+        }
+
         int noteCode = Note.getNoteByKey(nameButton).code;
         if (!buttonPressed.getOrDefault(nameButton, false)) {
             button.setStyle("-fx-border-color: black; -fx-background-color: orange");
-            ControllerSound.PlayNote noteThread = controllerSound.playNote(noteCode);
+            ControllerSound.PlayNote noteThread = controllerSound.playNote(noteCode + octaveNumber);
             buttonThread.put(nameButton, noteThread);
             if (!buttonPressed.keySet().contains(nameButton))
                 buttonPressed.put(nameButton, true);
